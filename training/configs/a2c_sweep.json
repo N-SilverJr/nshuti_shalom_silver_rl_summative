@@ -1,0 +1,66 @@
+{
+  "algo": "a2c",
+  "base": {
+    "seed": 0,
+    "total_frames": 300000,
+    "eval_every": 15000,
+    "eval_episodes": 20,
+    "final_eval_episodes": 50,
+    "hidden": [
+      64,
+      64
+    ],
+    "activation": "tanh",
+    "num_envs": 4,
+    "lr": 0.0007,
+    "gamma": 0.99,
+    "gae_lambda": 1.0,
+    "entropy_coef": 0.01,
+    "value_coef": 0.5,
+    "frames_per_batch": 64,
+    "normalize_advantage": false,
+    "max_grad_norm": 0.5,
+    "lr_anneal": false
+  },
+  "runs": [
+    {
+      "name": "r01_baseline"
+    },
+    {
+      "name": "r02_lr_high",
+      "lr": 0.002
+    },
+    {
+      "name": "r03_lr_low",
+      "lr": 0.0002
+    },
+    {
+      "name": "r04_nsteps_5",
+      "frames_per_batch": 20
+    },
+    {
+      "name": "r05_nsteps_64",
+      "frames_per_batch": 256
+    },
+    {
+      "name": "r06_no_entropy",
+      "entropy_coef": 0.0
+    },
+    {
+      "name": "r07_high_entropy",
+      "entropy_coef": 0.05
+    },
+    {
+      "name": "r08_value_coef_1",
+      "value_coef": 1.0
+    },
+    {
+      "name": "r09_gae_095",
+      "gae_lambda": 0.95
+    },
+    {
+      "name": "r10_norm_adv",
+      "normalize_advantage": true
+    }
+  ]
+}

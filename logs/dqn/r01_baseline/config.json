@@ -1,0 +1,28 @@
+{
+  "seed": 0,
+  "total_frames": 300000,
+  "eval_every": 15000,
+  "eval_episodes": 20,
+  "final_eval_episodes": 50,
+  "hidden": [
+    128,
+    128
+  ],
+  "activation": "relu",
+  "lr": 0.0005,
+  "gamma": 0.99,
+  "buffer_size": 50000,
+  "batch_size": 128,
+  "frames_per_batch": 32,
+  "updates_per_batch": 8,
+  "learning_starts": 2048,
+  "target_update": "hard",
+  "target_update_interval": 500,
+  "tau": 0.005,
+  "eps_start": 1.0,
+  "eps_end": 0.05,
+  "eps_decay_frac": 0.5,
+  "double_dqn": false,
+  "max_grad_norm": 10.0,
+  "name": "r01_baseline"
+}

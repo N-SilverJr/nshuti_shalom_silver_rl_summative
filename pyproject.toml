@@ -1,0 +1,22 @@
+[project]
+name = "umuhinzi-rl"
+version = "0.1.0"
+description = "Umuhinzi: RL advisory agent for Rwandan smallholder maize (DQN, REINFORCE, PPO, A2C with TorchRL)"
+requires-python = ">=3.11"
+dependencies = [
+    "gymnasium>=1.0",
+    "matplotlib>=3.11.2",
+    "numpy>=2.4.6",
+    "tensordict==0.15.*",
+    "torch>=2.5",
+    "torchrl==0.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

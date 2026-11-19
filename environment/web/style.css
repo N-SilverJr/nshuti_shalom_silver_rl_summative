@@ -1,0 +1,65 @@
+:root {
+  --bg: rgba(12, 18, 14, 0.78);
+  --line: rgba(255, 255, 255, 0.09);
+  --text: #eef3ea;
+  --muted: #9fb0a0;
+  --accent: #facc15;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0b120d; color: var(--text); }
+#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+.panel {
+  position: fixed; background: var(--bg); backdrop-filter: blur(10px);
+  border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
+h2 { margin: 10px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600; }
+p { margin: 0; color: var(--muted); font-size: 12px; }
+.muted { color: var(--muted); }
+
+#topbar {
+  position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center;
+  pointer-events: none;
+}
+.brand { display: flex; gap: 10px; align-items: center; background: var(--bg); padding: 8px 14px; border-radius: 14px; border: 1px solid var(--line); }
+.logo { font-size: 26px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 12px; }
+.chip.live::before { content: "●"; color: #f87171; margin-right: 6px; }
+.chip.live.on::before { color: #4ade80; }
+
+#left { top: 84px; left: 12px; width: 280px; max-height: calc(100vh - 230px); overflow: auto; }
+#right { top: 84px; right: 12px; width: 300px; }
+#timeline { left: 304px; right: 324px; bottom: 12px; height: 140px; padding: 8px 12px; }
+#chart { width: 100%; height: 110px; display: block; }
+
+section { border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+section:last-child { border-bottom: 0; }
+.date-row { display: flex; justify-content: space-between; align-items: baseline; }
+#date { font-size: 22px; font-weight: 700; }
+.progress { height: 4px; background: var(--line); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+#season-bar { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.kv { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+.kv b { font-variant-numeric: tabular-nums; }
+.meter { display: grid; grid-template-columns: 1fr 90px 44px; align-items: center; gap: 8px; font-size: 12px; padding: 3px 0; }
+.meter b { text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: rgba(255,255,255,.08); border-radius: 6px; overflow: hidden; }
+.fill { height: 100%; width: 0; border-radius: 6px; transition: width .35s ease; }
+.water { background: #60a5fa; } .tank { background: #38bdf8; } .stage { background: #facc15; } .health { background: #4ade80; }
+.weeds { background: #65a30d; } .pest { background: #f97316; } .pest-est { background: #fdba74; }
+.res { background: #e879f9; } .money { background: #34d399; }
+
+#phone { background: #0f1712; border: 1px solid var(--line); border-radius: 18px; padding: 10px; height: 300px; overflow: hidden; display: flex; flex-direction: column-reverse; }
+#sms-list { display: flex; flex-direction: column; gap: 8px; }
+.sms { background: #1f3b2a; border-radius: 14px 14px 14px 4px; padding: 8px 10px; font-size: 12.5px; line-height: 1.35; animation: pop .3s ease; }
+.sms small { display: block; color: var(--muted); font-size: 10.5px; margin-bottom: 2px; }
+.sms.warn { background: #4a2a12; } .sms.good { background: #1d3a4a; }
+@keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.badge { display: inline-block; background: var(--accent); color: #1a1a1a; font-weight: 700; padding: 6px 10px; border-radius: 10px; font-size: 13px; margin-bottom: 6px; }
+.event { font-size: 12.5px; color: #d9e4d6; min-height: 34px; margin-bottom: 6px; }
+.legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.legend i.tick { width: 2px; height: 10px; background: rgba(255,255,255,.5); }

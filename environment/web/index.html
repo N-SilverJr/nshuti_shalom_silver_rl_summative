@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Umuhinzi — RL Advisory Agent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="style.css" />
+<link rel="icon" href="data:," />
+<script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<header id="topbar">
+  <div class="brand">
+    <span class="logo">🌽</span>
+    <div>
+      <h1>Umuhinzi</h1>
+      <p>Season-A maize advisory agent · Rwanda</p>
+    </div>
+  </div>
+  <div class="chips">
+    <span class="chip" id="chip-agent">agent: –</span>
+    <span class="chip" id="chip-episode">episode –</span>
+    <span class="chip" id="chip-weather">weather –</span>
+    <span class="chip live" id="chip-status">waiting for agent…</span>
+  </div>
+</header>
+
+<aside id="left" class="panel">
+  <section>
+    <div class="date-row"><span id="date">–</span><span class="muted" id="day">day 0 / 198</span></div>
+    <div class="progress"><div id="season-bar"></div></div>
+  </section>
+  <section>
+    <h2>Weather</h2>
+    <div class="kv"><span>Rain (last day)</span><b id="rain">–</b></div>
+    <div class="kv"><span>7-day forecast</span><b id="forecast">–</b></div>
+    <div class="kv"><span>Rain since 20 Aug</span><b id="cumrain">–</b></div>
+    <div class="kv"><span>Temperature</span><b id="temp">–</b></div>
+    <div class="meter"><label>Soil moisture</label><div class="bar"><div id="m-soil" class="fill water"></div></div><b id="v-soil">–</b></div>
+    <div class="meter"><label>Rainwater tank</label><div class="bar"><div id="m-tank" class="fill tank"></div></div><b id="v-tank">–</b></div>
+  </section>
+  <section>
+    <h2>Crop</h2>
+    <div class="meter"><label>Growth stage</label><div class="bar"><div id="m-stage" class="fill stage"></div></div><b id="v-stage">–</b></div>
+    <div class="meter"><label>Crop health</label><div class="bar"><div id="m-health" class="fill health"></div></div><b id="v-health">–</b></div>
+    <div class="meter"><label>Weed pressure</label><div class="bar"><div id="m-weeds" class="fill weeds"></div></div><b id="v-weeds">–</b></div>
+  </section>
+  <section>
+    <h2>Fall armyworm</h2>
+    <div class="meter"><label>True infestation</label><div class="bar"><div id="m-pest" class="fill pest"></div></div><b id="v-pest">–</b></div>
+    <div class="meter"><label>Farmer's estimate</label><div class="bar"><div id="m-pestest" class="fill pest-est"></div></div><b id="v-pestest">–</b></div>
+    <div class="meter"><label>Resistance (cheap spray)</label><div class="bar"><div id="m-res" class="fill res"></div></div><b id="v-res">–</b></div>
+  </section>
+  <section>
+    <h2>Economics</h2>
+    <div class="meter"><label>Budget (kRWF)</label><div class="bar"><div id="m-budget" class="fill money"></div></div><b id="v-budget">–</b></div>
+    <div class="kv"><span>Episode return</span><b id="return">–</b></div>
+    <div class="kv"><span>Harvest</span><b id="harvest">–</b></div>
+  </section>
+</aside>
+
+<aside id="right" class="panel">
+  <h2>📱 SMS advisories sent</h2>
+  <div id="phone">
+    <div id="sms-list"></div>
+  </div>
+  <h2>Last step</h2>
+  <div id="action-badge" class="badge">–</div>
+  <div id="event" class="event">–</div>
+  <div class="kv"><span>Step reward</span><b id="reward">–</b></div>
+</aside>
+
+<footer id="timeline" class="panel">
+  <div class="legend">
+    <span><i style="background:#4ade80"></i>health</span>
+    <span><i style="background:#60a5fa"></i>soil moisture</span>
+    <span><i style="background:#f97316"></i>armyworm</span>
+    <span><i style="background:#facc15"></i>growth stage</span>
+    <span><i class="tick"></i>advisory</span>
+  </div>
+  <canvas id="chart" height="110"></canvas>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

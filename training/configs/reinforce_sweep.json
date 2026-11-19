@@ -1,0 +1,69 @@
+{
+  "algo": "reinforce",
+  "base": {
+    "seed": 0,
+    "total_frames": 300000,
+    "eval_every": 15000,
+    "eval_episodes": 20,
+    "final_eval_episodes": 50,
+    "hidden": [
+      64,
+      64
+    ],
+    "activation": "tanh",
+    "num_envs": 4,
+    "lr": 0.001,
+    "gamma": 0.99,
+    "baseline": true,
+    "normalize_returns": true,
+    "entropy_coef": 0.01,
+    "value_coef": 0.5,
+    "frames_per_batch": 2048,
+    "max_grad_norm": 1.0,
+    "lr_anneal": false
+  },
+  "runs": [
+    {
+      "name": "r01_baseline"
+    },
+    {
+      "name": "r02_no_baseline",
+      "baseline": false
+    },
+    {
+      "name": "r03_no_norm",
+      "normalize_returns": false
+    },
+    {
+      "name": "r04_lr_low",
+      "lr": 0.0003
+    },
+    {
+      "name": "r05_lr_high",
+      "lr": 0.003
+    },
+    {
+      "name": "r06_gamma_095",
+      "gamma": 0.95
+    },
+    {
+      "name": "r07_no_entropy",
+      "entropy_coef": 0.0
+    },
+    {
+      "name": "r08_high_entropy",
+      "entropy_coef": 0.05
+    },
+    {
+      "name": "r09_small_batch",
+      "frames_per_batch": 512
+    },
+    {
+      "name": "r10_wide_net",
+      "hidden": [
+        128,
+        128
+      ]
+    }
+  ]
+}
