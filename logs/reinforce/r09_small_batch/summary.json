@@ -1,16 +1,16 @@
 {
-  "best_val_return": 1.4782148195025133,
-  "best_val_frames": 270336,
-  "test_return": 0.5811067048930929,
-  "test_std": 2.7281251987456057,
-  "test_harvest_kg": 90.50520650281103,
-  "test_profit_krwf": 17.956822275983853,
+  "best_val_return": 0.07499868266171712,
+  "best_val_frames": 285184,
+  "test_return": 0.5627687097955604,
+  "test_std": 2.6013936546489616,
+  "test_harvest_kg": 88.11534662897384,
+  "test_profit_krwf": 17.080371320140852,
   "test_failure_rate": 0.12,
   "test_toxicity": 0.0,
   "test_cheap_sprays": 0.0,
-  "drought_test_return": -1.7832324123412142,
-  "final_weights_test_return": 0.5290672427284482,
+  "drought_test_return": -3.3422324691818783,
+  "final_weights_test_return": -0.5509048985418658,
   "frames": 300032,
-  "wall_s": 204.2,
-  "test_sample_return": 0.6485486592575943
+  "wall_s": 363.4,
+  "test_sample_return": 0.8289067760599544
 }

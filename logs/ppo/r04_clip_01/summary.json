@@ -1,0 +1,16 @@
+{
+  "best_val_return": 4.136727630509875,
+  "best_val_frames": 301056,
+  "test_return": 3.944989378039759,
+  "test_std": 1.9265522234155976,
+  "test_harvest_kg": 278.304126592998,
+  "test_profit_krwf": 66.43644430754931,
+  "test_failure_rate": 0.0,
+  "test_toxicity": 1.0439999999999998,
+  "test_cheap_sprays": 1.74,
+  "drought_test_return": 0.30408800887050524,
+  "final_weights_test_return": 3.944989378039759,
+  "frames": 301056,
+  "wall_s": 304.5,
+  "test_sample_return": 3.7806351085244954
+}

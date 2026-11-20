@@ -1,0 +1,26 @@
+{
+  "seed": 0,
+  "total_frames": 300000,
+  "eval_every": 15000,
+  "eval_episodes": 20,
+  "final_eval_episodes": 50,
+  "hidden": [
+    64,
+    64
+  ],
+  "activation": "tanh",
+  "num_envs": 4,
+  "lr": 0.0003,
+  "gamma": 0.99,
+  "gae_lambda": 0.95,
+  "clip_epsilon": 0.3,
+  "entropy_coef": 0.01,
+  "value_coef": 0.5,
+  "n_epochs": 4,
+  "frames_per_batch": 2048,
+  "minibatch_size": 256,
+  "normalize_advantage": true,
+  "max_grad_norm": 0.5,
+  "lr_anneal": false,
+  "name": "r05_clip_03"
+}

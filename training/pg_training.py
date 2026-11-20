@@ -133,14 +133,14 @@ def train_pg(algo: str, cfg: dict, verbose: bool = True) -> dict:
                 for _ in range(max(data.numel() // cfg["minibatch_size"], 1)):
                     mb = rb.sample()
                     out = loss_fn(mb)
-                    loss = out["loss_objective"] + out["loss_critic"] + out["loss_entropy"]
+                    loss = sum(v for k, v in out.items() if k.startswith("loss_"))  # loss_entropy is absent when its coef is 0
                     optim.zero_grad()
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(loss_fn.parameters(), cfg["max_grad_norm"])
                     optim.step()
                     stats["loss_actor"].append(out["loss_objective"].item())
                     stats["loss_value"].append(out["loss_critic"].item())
-                    stats["entropy"].append(out["entropy"].item())
+                    stats["entropy"].append(out["entropy"].item() if "entropy" in out.keys() else float("nan"))
                     if "kl_approx" in out.keys():
                         stats["kl_approx"].append(out["kl_approx"].item())
                     if "clip_fraction" in out.keys():
@@ -154,14 +154,18 @@ def train_pg(algo: str, cfg: dict, verbose: bool = True) -> dict:
                 adv = flat["advantage"]
                 flat["advantage"] = (adv - adv.mean()) / (adv.std() + 1e-8)
             out = loss_fn(flat)
-            loss = out["loss_objective"] + out["loss_critic"] + out["loss_entropy"]
+            loss = sum(v for k, v in out.items() if k.startswith("loss_"))  # loss_entropy is absent when its coef is 0
             optim.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(loss_fn.parameters(), cfg["max_grad_norm"])
             optim.step()
             stats["loss_actor"].append(out["loss_objective"].item())
             stats["loss_value"].append(out["loss_critic"].item())
-            stats["entropy"].append(out["entropy"].item())
+            if "entropy" in out.keys():
+                stats["entropy"].append(out["entropy"].item())
+            else:  # entropy_coeff=0: A2CLoss skips it, but we still log it for the entropy figure
+                with torch.no_grad():
+                    stats["entropy"].append(actor.get_dist(flat).entropy().mean().item())
 
         else:  # REINFORCE: Monte-Carlo returns over complete episodes in the batch
             td = data if data.ndim == 2 else data.unsqueeze(0)

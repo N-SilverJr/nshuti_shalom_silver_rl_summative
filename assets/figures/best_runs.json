@@ -1,6 +1,6 @@
 {
-  "dqn": "r01_baseline",
-  "reinforce": "r09_small_batch",
-  "ppo": "r01_baseline",
-  "a2c": "r01_baseline"
+  "dqn": "r09_double_dqn",
+  "reinforce": "r11_lr_high_small_batch",
+  "ppo": "r02_lr_high",
+  "a2c": "r12_lr_high_nsteps_64_norm"
 }

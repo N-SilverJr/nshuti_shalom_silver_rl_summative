@@ -61,6 +61,18 @@
     {
       "name": "r10_norm_adv",
       "normalize_advantage": true
+    },
+    {
+      "name": "r11_lr_high_nsteps_64",
+      "lr": 0.002,
+      "frames_per_batch": 256
+    },
+    {
+      "name": "r12_lr_high_nsteps_64_norm",
+      "lr": 0.002,
+      "frames_per_batch": 256,
+      "normalize_advantage": true
     }
-  ]
+  ],
+  "note": "r01-r10: one-factor-at-a-time sweep; r11-r12: round 2 combining the factors that helped in round 1"
 }

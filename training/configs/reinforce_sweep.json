@@ -64,6 +64,18 @@
         128,
         128
       ]
+    },
+    {
+      "name": "r11_lr_high_small_batch",
+      "lr": 0.003,
+      "frames_per_batch": 512
+    },
+    {
+      "name": "r12_lr_high_small_batch_entropy",
+      "lr": 0.003,
+      "frames_per_batch": 512,
+      "entropy_coef": 0.05
     }
-  ]
+  ],
+  "note": "r01-r10: one-factor-at-a-time sweep; r11-r12: round 2 combining the factors that helped in round 1"
 }
