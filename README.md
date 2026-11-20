@@ -59,7 +59,7 @@ An action that is invalid in the current state (e.g. spraying before planting) i
 | # | Observation | Encoding / range | Real-world source | Cadence | In simulation |
 |---|---|---|---|---|---|
 | 0 | `day_of_season` | day / 198 | System clock | per step | step counter |
-| 1 | `rain_last_step` | mm in last 3 days / 60 | Meteo Rwanda station / Open-Meteo API | daily | weather series |
+| 1 | `rain_last_step` | mm in last 3 days / 60 | Meteo Rwanda station / Open-Meteo API | daily | calibrated generator (train) / real ERA5 series (test) |
 | 2 | `forecast_rain_7d` | mm / 100 | 7-day forecast API | daily | true 7-day sum × log-normal error (σ = 0.35) |
 | 3 | `cum_rain_since_start` | mm since 20 Aug / 400 | Weather API (onset detection) | daily | running sum |
 | 4 | `soil_moisture` | fraction of a 70 mm root-zone bucket | Low-cost capacitive soil sensor | per step | water balance: rain − ET·Kc, drainage |
@@ -80,7 +80,9 @@ An action that is invalid in the current state (e.g. spraying before planting) i
 **Hidden state** (simulated, not observed directly): true armyworm infestation, pest resistance to the cheap pesticide, and future weather.
 
 ### Dynamics
-- **Weather:** daily rainfall and temperature. By default this comes from a synthetic generator calibrated to an approximate Northern Province bimodal climate, with random onset shifts, false onsets and mid-season dry spells. Each "weather year" is a seeded id: training uses ids 0–999 and **evaluation uses unseen ids 10 000–10 049**. Run `uv run python scripts/fetch_weather.py` to download real Open-Meteo data. The environment then replays real seasons, with ≤ 2015 for training and 2016+ held out.
+- **Weather:** daily rainfall and temperature for **Nyagatare** (Eastern Province, Rwanda's main maize belt and its most drought-exposed). `scripts/fetch_weather.py` downloads 1995–2025 data from the Open-Meteo archive. It requests a single consistent reanalysis (ERA5-Seamless), because the API's default switches model in 2017, which halved rainfall at one test site. `scripts/check_weather.py` checks the data. Days under 1 mm count as dry.
+  - **Training and validation** use a stochastic **weather generator calibrated on seasons before 20 Aug 2016**: a two-state Markov chain for whether each day is wet, gamma-distributed amounts per month, onset dates sampled from the observed onsets, and a season-wetness factor matched to the observed year-to-year spread. Training uses generated years 0–999 and validation years 5000–5029, so there are unlimited seasons without memorising 20 real ones.
+  - **Testing** replays the **real 2016/17–2024/25 seasons**, which the generator never saw: a true simulation-to-reality test. A generated test set (`test_gen`, ids 10000–10049) gives the in-distribution comparison.
 - **Water:** rain-fed with a small rainwater-harvesting tank. The tank is nearly empty after the dry season, so the agent cannot "dry-plant and irrigate" in August. Water saved during the rains can rescue the crop in a mid-season dry spell.
 - **Germination:** if the soil averages too dry over the first 6 days after planting, the seed can fail (the money is lost and the agent must replant).
 - **Fall armyworm:** random moth arrivals plus temperature-driven logistic growth. Damage is highest in the whorl stage and negligible below 8 % infestation.
@@ -123,7 +125,7 @@ There is no "correct label" per day. Only the season's outcome tells you whether
 | PPO | `training/pg_training.py` | `ClipPPOLoss`, `GAE`, `SamplerWithoutReplacement` mini-batches |
 | A2C | `training/pg_training.py` | `A2CLoss`, `GAE`/n-step advantages, one update per rollout |
 
-All four use the same environment (`training/common.py::make_env`), the same frame budget (300k), the same seeds and the same evaluation protocol. Evaluation runs the greedy policy on 50 **unseen** weather years in normal and drought (−40 % rain) conditions. Policy-gradient agents are also evaluated stochastically (`eval_sample_return_mean`).
+All four use the same environment (`training/common.py::make_env`), the same frame budget (300k), the same seeds and the same evaluation protocol. Evaluation runs the greedy policy on the **real held-out seasons 2016/17–2024/25** (50 episodes with different pest draws) in normal and drought (−40 % rain) conditions, plus the generated test set. Policy-gradient agents are also evaluated stochastically (`eval_sample_return_mean`).
 
 ### Hyperparameter sweeps
 `training/configs/<algo>_sweep.json` holds 10 configurations per algorithm. Each changes one factor from the base config, so its effect can be attributed:

@@ -4,7 +4,7 @@ from gymnasium.utils.env_checker import check_env
 
 from environment.baselines import BASELINES, run_policy
 from environment.custom_env import OBS_NAMES, Action, UmuhinziEnv
-from environment.weather import synthetic_season
+from environment.weather import WeatherProvider
 
 
 def test_gymnasium_api():
@@ -27,10 +27,11 @@ def test_observation_bounds_and_length():
 
 
 def test_weather_years_deterministic_and_disjoint():
-    a, b = synthetic_season(5), synthetic_season(5)
-    assert np.allclose(a.rain, b.rain)
-    tr, va, ev = (set(UmuhinziEnv(split=s).year_ids) for s in ("train", "val", "eval"))
-    assert not (tr & va) and not (tr & ev) and not (va & ev)
+    w = WeatherProvider()
+    a, b = w.season(5), w.season(5)
+    assert np.allclose(a.rain, b.rain) and len(a.rain) == len(b.rain)
+    tr, va, ev, tg = (set(UmuhinziEnv(split=s).year_ids) for s in ("train", "val", "eval", "test_gen"))
+    assert not (tr & va) and not (tr & ev) and not (va & ev) and not (tr & tg) and not (va & tg)
 
 
 def test_invalid_actions_are_penalised_noops():
@@ -54,6 +55,8 @@ def test_scouting_reveals_true_pest_level():
     env = UmuhinziEnv()
     env.reset(seed=3)
     env.step(Action.PLANT)
+    # force an established crop so the test does not depend on germination luck
+    env.planted, env.plant_day, env.health, env.stage = True, env.day - 20, 1.0, 0.2
     env.pest = 0.4
     env.step(Action.SCOUT)
     assert abs(env.pest_scouted - env.pest) < 0.1 and env.steps_since_scout == 0

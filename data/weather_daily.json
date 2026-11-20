@@ -1,0 +1,9 @@
+{
+  "site": "nyagatare",
+  "lat": -1.2938,
+  "lon": 30.3275,
+  "model": "era5_seamless",
+  "start": "1995-01-01",
+  "end": "2025-06-30",
+  "source": "Open-Meteo Historical Weather API (archive-api.open-meteo.com)"
+}

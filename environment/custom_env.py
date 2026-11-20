@@ -127,7 +127,7 @@ class UmuhinziEnv(gym.Env):
         force_synthetic: bool = False,
     ):
         super().__init__()
-        assert split in ("train", "val", "eval")
+        assert split in ("train", "val", "eval", "test_gen")
         self.p = params or EnvParams()
         self.split = split
         self.rain_scale = rain_scale
