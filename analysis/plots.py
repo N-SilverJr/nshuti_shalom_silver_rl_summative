@@ -88,6 +88,8 @@ def fig_comparative():
         r = runs(a)[b]
         x, y = col(r, "frames") / 1000, col(r, "val_return_mean")
         ax.plot(x, smooth(y), color=COLORS[a], label=f"{NAMES[a]} ({b})")
+        k = int(np.nanargmax(y))  # checkpoint kept = best validation evaluation
+        ax.plot(x[k], smooth(y)[k], "o", ms=8, color=COLORS[a], mec=SURFACE, mew=2, zorder=5)
         ends.append([smooth(y)[-1], x[-1], NAMES[a]])
     # direct end labels, nudged apart so they never overlap
     ends.sort()
@@ -108,6 +110,8 @@ def fig_comparative():
     ax.set(xlabel="training frames (thousands)", ylabel="validation return (greedy, 20 unseen seasons)",
            title="Fig. 1  Validation return during training (best run per algorithm)")
     ax.legend(loc="lower right", fontsize=8)
+    ax.text(0.99, 0.30, "●  checkpoint kept (best validation)\nbaselines: dashed/dotted, test seasons",
+            transform=ax.transAxes, ha="right", fontsize=8, color=INK2)
     save(fig, "fig1_comparative_rewards.png")
 
 
@@ -123,9 +127,13 @@ def fig_dqn_loss():
         kw = dict(color=COLORS["dqn"] if hl else MUTED, lw=2 if hl else 1, alpha=1 if hl else 0.55,
                   label=f"{name} (best)" if hl else None)
         a1.plot(x, col(r, "loss"), **kw)
-        a2.plot(x, col(r, "q_mean"), **kw)
+        q = col(r, "q_mean")
+        a2.plot(x, q, **kw)
+        if np.nanmax(q) > 20:  # name the runs whose value estimates blew up
+            a2.annotate(name, (x[-1], q[-1]), xytext=(-4, 0), textcoords="offset points",
+                        ha="right", va="center", fontsize=8, color=INK2)
     a1.set(xlabel="frames (thousands)", ylabel="mean TD loss", title="DQN objective (TD loss)", yscale="log")
-    a2.set(xlabel="frames (thousands)", ylabel="mean max-Q of sampled batch", title="DQN value estimates")
+    a2.set(xlabel="frames (thousands)", ylabel="mean max-Q of sampled batch (log)", title="DQN value estimates", yscale="log")
     a1.legend(fontsize=8)
     fig.suptitle("Fig. 2  DQN loss and Q-values across all 10 runs (grey) - best run highlighted", fontsize=10, color=INK)
     save(fig, "fig2_dqn_loss.png")
@@ -187,13 +195,13 @@ def fig_generalization():
                        Patch(facecolor=MUTED, alpha=0.45, hatch="//", label="drought (−40% rain)")],
               loc="lower left", fontsize=8)
     ax.set_xticks(x, [NAMES.get(p, p.replace("_", "\n")) for p in pols], fontsize=9)
-    ax.set(ylabel="held-out return (mean ± sd, 50 seasons)",
+    ax.set(ylabel="test return (mean ± sd)\n50 episodes over 9 real seasons",
            title="Fig. 5  Generalisation to unseen weather years (test set)")
     save(fig, "fig5_generalization.png")
 
 
 def fig_sweeps():
-    fig, axes = plt.subplots(1, 4, figsize=(14, 3.8), sharey=True)
+    fig, axes = plt.subplots(1, 4, figsize=(16, 4.2), gridspec_kw={"wspace": 0.85})
     for ax, a in zip(axes, ALGOS):
         rows = read_csv(LOGS / a / "sweep_summary.csv")
         if not rows:
@@ -204,7 +212,7 @@ def fig_sweeps():
         best = int(np.argmax([float(r["best_val_return"]) for r in rows]))
         ax.barh(range(len(v)), v, color=[COLORS[a] if i == best else MUTED for i in range(len(v))],
                 edgecolor=SURFACE, linewidth=2)
-        ax.set_yticks(range(len(v)), [r["run"] for r in rows], fontsize=8)
+        ax.set_yticks(range(len(v)), [r["run"] for r in rows], fontsize=7.5)  # each panel its own run names
         ax.invert_yaxis()
         ax.axvline(0, color=INK2, lw=0.8)
         ax.set(title=NAMES[a], xlabel="test return (best-val checkpoint)")
