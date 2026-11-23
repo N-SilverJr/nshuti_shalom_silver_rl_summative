@@ -176,6 +176,7 @@ class UmuhinziEnv(gym.Env):
         self.last_event = "Season start: waiting for the rains"
         self.ep_return = 0.0
         self.last_reward = 0.0
+        self.last_parts = {}
         self.totals = {"revenue": 0.0, "costs": 0.0, "toxicity": 0.0, "shaping": 0.0, "invalid": 0}
         self._update_pest_estimate(scouted=False)
         return self._obs(), self._info()
@@ -198,6 +199,8 @@ class UmuhinziEnv(gym.Env):
         action = Action(int(action))
         p = self.p
         reward = 0.0
+        # Same reward, itemised: lets the viewer/terminal explain every step.
+        parts = {"cost": 0.0, "toxicity": 0.0, "progress": 0.0, "harvest": 0.0, "invalid": 0.0, "failure": 0.0}
         terminated = False
         events: list[str] = []
         phi_before = self._potential()
@@ -205,6 +208,7 @@ class UmuhinziEnv(gym.Env):
 
         if not self.valid_actions()[action]:
             reward -= p.invalid_penalty
+            parts["invalid"] -= p.invalid_penalty
             self.totals["invalid"] += 1
             events.append(f"Invalid advisory ({ACTION_LABELS[action]}) ignored")
             action_effective = Action.WAIT
@@ -213,9 +217,11 @@ class UmuhinziEnv(gym.Env):
             cost = p.costs[action]
             self.budget -= cost
             reward -= cost / p.reward_scale
+            parts["cost"] -= cost / p.reward_scale
             self.totals["costs"] += cost
             tox = p.toxicity.get(action, 0.0)
             reward -= tox
+            parts["toxicity"] -= tox
             self.totals["toxicity"] += tox
 
         a = action_effective
@@ -252,7 +258,9 @@ class UmuhinziEnv(gym.Env):
             self.fertility = min(1.0, self.fertility + 0.12)
             events.append("Weeded and top-dressed")
         elif a == Action.HARVEST:
-            reward += self._harvest(events)
+            h = self._harvest(events)
+            reward += h
+            parts["harvest"] += h
             terminated = True
 
         # ---- simulate the days until the next decision
@@ -264,6 +272,7 @@ class UmuhinziEnv(gym.Env):
                 if self.planted and self.health <= 0.05:
                     events.append("Crop lost (health collapsed)")
                     reward -= p.failure_penalty
+                    parts["failure"] -= p.failure_penalty
                     terminated = True
                     break
 
@@ -272,6 +281,7 @@ class UmuhinziEnv(gym.Env):
         phi_after = 0.0 if terminated else self._potential()
         shaping = p.shaping_gamma * phi_after - phi_before
         reward += shaping
+        parts["progress"] += shaping
         self.totals["shaping"] += shaping
 
         self.t += 1
@@ -279,25 +289,32 @@ class UmuhinziEnv(gym.Env):
         if not terminated and self.t >= self.max_steps:
             if self.planted:
                 events.append("Season over: forced harvest")
-                reward += self._harvest(events)
+                h = self._harvest(events)
+                reward += h
+                parts["harvest"] += h
                 reward -= p.shaping_gamma * phi_after  # potential of harvested field is 0
+                parts["progress"] -= p.shaping_gamma * phi_after
                 self.totals["shaping"] -= p.shaping_gamma * phi_after
             else:
                 events.append("Season over: nothing was planted")
                 reward -= p.failure_penalty
+                parts["failure"] -= p.failure_penalty
             truncated = True
         if not terminated and not truncated and not self.planted and self.budget < p.costs[Action.PLANT]:
             events.append("Budget exhausted before a crop could be established")
             reward -= p.failure_penalty
+            parts["failure"] -= p.failure_penalty
             terminated = True
 
         self._update_pest_estimate(scouted)
         self.last_action = int(action)
-        self.last_event = "; ".join(events) if events else "Monitoring"
+        self.last_event = "; ".join(dict.fromkeys(events)) if events else "Monitoring"  # de-duplicate daily repeats
         self.ep_return += reward
         self.last_reward = float(reward)
+        self.last_parts = {k: float(v) for k, v in parts.items()}
         info = self._info()
         info["reward"] = reward
+        info["reward_parts"] = dict(self.last_parts)
         if self.render_mode == "human":
             self.render()
         return self._obs(), float(reward), terminated, truncated, info
@@ -507,6 +524,7 @@ class UmuhinziEnv(gym.Env):
             "event": self.last_event,
             "episode_return": self.ep_return,
             "step_reward": self.last_reward,
+            "reward_parts": self.last_parts,
             "max_steps": self.max_steps,
         }
 

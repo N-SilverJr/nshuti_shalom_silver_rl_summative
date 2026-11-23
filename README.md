@@ -23,6 +23,8 @@ Other commands:
 | Command | What it does |
 |---|---|
 | `uv run main.py play --algo ppo --episodes 2` | Run a specific agent in the 3D viewer (also `uv run play.py ...`) |
+| `uv run main.py --episodes 1 --year-index 7` | One real season (2023/24) with demo pacing: monitoring steps fast-forward, each SMS advisory is held for 2.5 s |
+| `uv run main.py --pace steady --speed 3` | Fixed speed instead of demo pacing |
 | `uv run main.py play --algo dqn --drought` | Stress test: the same agent with 40 % less rain |
 | `uv run main.py play --algo threshold_farmer` | Rule-based baseline, for comparison |
 | `uv run main.py train --algo dqn --run 3` | Train config #3 of `training/configs/dqn_sweep.json` |
@@ -141,6 +143,17 @@ Outputs:
 - `models/{dqn,pg}/<algo>_<run>.pt` for every run, and `best_<algo>.pt` for the best run of each algorithm.
 
 ---
+
+## Watching a demo: what you see
+
+`uv run main.py` plays the best agent on the **real held-out seasons** (2016/17–2024/25) at **demo pace**. Monitoring steps fast-forward, and the simulation pauses for 2.5 s (`--hold`) on every SMS advisory, so each decision can be read.
+
+- **Pop-up card (top centre):** the advisory just sent, the SMS text the farmer receives, and the **reward for that step, itemised**. For example: *Reward −0.53 = cost of advice −0.60 · toxicity penalty −0.10 · crop progress +0.17*. It also announces a new season, a lost seed, an armyworm outbreak, invalid advice and the harvest.
+- **Right panel:** the full SMS history and the same itemised reward for the last step.
+- **Left panel:** everything the agent observes (weather, forecast, soil, tank, crop, pest estimate, budget). The true armyworm level and resistance are shown for the viewer only, because the agent cannot see them.
+- **Terminal:** one line per step. Under every advisory, a `↳ reward … = …` line explains the score.
+
+**Scoring:** 1 reward point = 10,000 RWF. *Crop progress* is a small payment while the maize grows healthily. It is cashed in at harvest, when the real harvest value is paid (potential-based shaping), so the season total equals profit minus toxicity and failure penalties.
 
 ## Visualisation and integration (`environment/rendering.py`, `environment/web/`)
 

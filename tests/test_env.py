@@ -77,3 +77,16 @@ def test_sensible_baseline_beats_random():
     rnd = np.mean([r["return"] for r in run_policy(BASELINES["random"](), 20)])
     thr = np.mean([r["return"] for r in run_policy(BASELINES["threshold_farmer"](), 20)])
     assert thr > rnd + 2
+
+
+def test_reward_breakdown_adds_up():
+    """The itemised reward shown in the viewer must equal the real reward."""
+    env = UmuhinziEnv(split="eval")
+    for ep in range(3):
+        env.reset(seed=ep, options={"year": env.year_ids[ep]})
+        rng = np.random.default_rng(ep)
+        done = False
+        while not done:
+            _, r, te, tr, info = env.step(int(rng.choice([0, 0, 0, 1, 2, 3, 4, 5, 6, 7])))
+            assert sum(info["reward_parts"].values()) == pytest.approx(r, abs=1e-9)
+            done = te or tr

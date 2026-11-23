@@ -238,6 +238,65 @@ const SMS_TEXT = {
 };
 const SMS_CLASS = { SPRAY_CHEAP: "warn", SPRAY_BIO: "warn", IRRIGATE: "good", PLANT: "good", HARVEST: "good" };
 
+// ---- itemised reward (mirrors play.py explain_reward)
+const PART_LABELS = { cost: "Cost of advice", toxicity: "Toxicity penalty", progress: "Crop progress", harvest: "Harvest value", invalid: "Invalid advice", failure: "Season failed" };
+function partRows(parts) {
+  const rows = [];
+  for (const [k, label] of Object.entries(PART_LABELS)) {
+    const v = parts?.[k] ?? 0;
+    if (Math.abs(v) < 0.005) continue;
+    const name = k === "progress" && (parts.harvest ?? 0) > 0 && v < 0 ? "Progress points cashed in" : label;
+    rows.push([name, v]);
+  }
+  return rows;
+}
+const fmt = (v) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(2)}`;
+function renderParts(s) {
+  const rows = partRows(s.reward_parts);
+  $("parts").innerHTML = rows.length
+    ? rows.map(([n, v]) => `<span class="lbl">${n}</span><span class="val ${v >= 0 ? "pos" : "neg"}">${fmt(v)}</span>`).join("")
+    : `<span class="lbl">Nothing happened this step</span><span></span>`;
+}
+
+// ---- advisory pop-up
+let toastTimer = null;
+let toastShownAt = 0;
+function hideToastIfStale() {
+  // a later, uneventful step has arrived: never leave an old advisory on screen
+  if (performance.now() - toastShownAt > 700) $("toast").classList.remove("show");
+}
+function showToast(kind, title, body, s, ms) {
+  toastShownAt = performance.now();
+  const t = $("toast");
+  t.className = `toast show ${kind}`;
+  $("toast-title").textContent = title;
+  $("toast-date").textContent = s.date ? `${s.date} · day ${s.day}` : "";
+  $("toast-body").textContent = body;
+  const rows = partRows(s.reward_parts);
+  $("toast-reward").innerHTML = rows.length
+    ? `Reward <b>${fmt(s.step_reward ?? 0)}</b> = ` + rows.map(([n, v]) => `${n.toLowerCase()} <b class="${v >= 0 ? "pos" : "neg"}">${fmt(v)}</b>`).join(" · ")
+    : "";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), ms);
+}
+function toastFor(s, act) {
+  const m = s.meta || {};
+  const ms = m.pace === "demo" ? Math.max(1200, (m.hold ?? 2.5) * 1000 - 200) : 1400;
+  const ev = s.event || "";
+  if (s.t === 0) {
+    const yr = s.year;
+    return showToast("info", `Season ${yr}/${String((yr + 1) % 100).padStart(2, "0")} begins`,
+      `${s.weather_source === "historical" ? "Real recorded weather for Nyagatare" : "Generated weather"}. Nothing is planted yet; the agent is waiting for the rains.`, s, ms);
+  }
+  if (ev.startsWith("Invalid")) return showToast("warn", "Invalid advice ignored", `${s.last_action_label} is not possible right now, so the farmer does nothing.`, s, ms);
+  if (act === "HARVEST" || ev.includes("forced harvest")) return showToast("good", `Harvest: ${s.harvest_kg.toFixed(0)} kg`, `Season return ${s.episode_return.toFixed(2)} points. ${ev}`, s, ms + 1500);
+  if (act && act !== "WAIT") return showToast(SMS_CLASS[act] || "", s.last_action_label, SMS_TEXT[act](s), s, ms);
+  if (ev.includes("Germination")) return showToast("warn", "Seed lost", ev, s, ms);
+  if (ev.includes("lost")) return showToast("warn", "Crop lost", ev, s, ms);
+  if (ev.includes("!")) return showToast("warn", "Armyworm outbreak", "Infestation is rising fast. Watch whether the agent scouts or sprays.", s, ms);
+  hideToastIfStale();
+}
+
 const target = { stage: 0, health: 0, planted: false, pest: 0, weeds: 0, soil: 0.3, harvested: false, harvestKg: 0 };
 const shown = { stage: 0, health: 0, pest: 0, weeds: 0, soil: 0.3 };
 const history = [];
@@ -303,7 +362,9 @@ function onFrame(s) {
   $("harvest").textContent = s.harvest_kg > 0 ? `${s.harvest_kg.toFixed(0)} kg` : "–";
   $("action-badge").textContent = s.last_action_label;
   $("event").textContent = s.event;
-  $("reward").textContent = (s.step_reward ?? 0).toFixed(3);
+  $("reward").textContent = fmt(s.step_reward ?? 0);
+  renderParts(s);
+  toastFor(s, act);
   drawChart();
 }
 
@@ -402,7 +463,7 @@ const chart = $("chart");
 const ctx = chart.getContext("2d");
 function drawChart() {
   const w = (chart.width = chart.clientWidth * devicePixelRatio);
-  const h = (chart.height = 110 * devicePixelRatio);
+  const h = (chart.height = chart.clientHeight * devicePixelRatio);
   ctx.clearRect(0, 0, w, h);
   const maxT = history[0]?.max_steps || 66;
   const X = (t) => (t / maxT) * (w - 8) + 4;

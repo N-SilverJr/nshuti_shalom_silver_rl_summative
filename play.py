@@ -1,6 +1,7 @@
 """Run a trained agent in the 3D simulation with verbose terminal output.
 
-    uv run play.py                          # best available agent, opens browser
+    uv run play.py                          # best agent, demo pacing (holds on each SMS)
+    uv run play.py --pace steady --speed 3  # fixed speed instead
     uv run play.py --algo ppo --episodes 2
     uv run play.py --algo dqn --drought     # 40% less rain (stress test)
     uv run play.py --algo threshold_farmer  # rule-based baseline for comparison
@@ -60,6 +61,35 @@ def make_policy(algo: str, ckpt: Path | None, mode: str):
     return label, (lambda env, obs: raw(obs)), raw
 
 
+PART_LABELS = {
+    "cost": "cost",
+    "toxicity": "toxicity",
+    "progress": "crop progress",
+    "harvest": "harvest value",
+    "invalid": "invalid advice",
+    "failure": "season failed",
+}
+
+
+def explain_reward(parts: dict) -> str:
+    """'cost -0.25 · toxicity -0.60 · crop progress +0.15' (non-zero parts only)."""
+    out = []
+    for k, label in PART_LABELS.items():
+        v = parts.get(k, 0.0)
+        if abs(v) < 0.005:
+            continue
+        if k == "progress" and parts.get("harvest", 0.0) > 0 and v < 0:
+            label = "progress points cashed in"
+        out.append(f"{label} {v:+.2f}")
+    return " · ".join(out) if out else "nothing happened"
+
+
+def is_highlight(a: int, s: dict, done: bool) -> bool:
+    """Steps worth pausing on: a real SMS was sent, or something important happened."""
+    ev = s["event"]
+    return a != Action.WAIT or done or "!" in ev or "Germination" in ev or "lost" in ev or "stress" in ev
+
+
 def bar(v: float, width: int = 10) -> str:
     n = int(round(max(0.0, min(1.0, v)) * width))
     return "█" * n + "·" * (width - n)
@@ -70,16 +100,19 @@ def play(args):
     if args.algo in BASELINES:
         algo, ckpt = args.algo, None
     label, policy, raw = make_policy(algo, ckpt, args.mode)
+    speed = args.speed or (5.0 if args.pace == "demo" else 3.0)
 
     env = UmuhinziEnv(split="eval", rain_scale=0.6 if args.drought else 1.0)
     viewer = None
     if not args.headless:
         viewer = get_viewer(port=args.port, open_browser=not args.no_browser)
         viewer.policy_fn = raw
-        viewer.set_meta(agent=label, rain_scale=env.rain_scale)
+        viewer.set_meta(agent=label, rain_scale=env.rain_scale, pace=args.pace, hold=args.hold)
 
     print(f"{C['b']}Umuhinzi advisory agent{C['x']}  agent={label}  checkpoint={ckpt or 'rule-based baseline'}")
     print(f"weather={env.weather.source}  split=held-out eval years  rain_scale={env.rain_scale}  mode={args.mode}")
+    print(f"{C['d']}score: 1 reward point = 10,000 RWF · pace={args.pace} "
+          f"({'monitoring steps fast-forward, each SMS advisory is held ' + str(args.hold) + 's' if args.pace == 'demo' else str(speed) + ' steps/s'}){C['x']}")
     if viewer and args.wait > 0:
         print(f"{C['d']}waiting {args.wait}s for the browser to connect…{C['x']}")
         time.sleep(args.wait)
@@ -91,6 +124,8 @@ def play(args):
         if viewer:
             viewer.set_meta(episode=ep + 1)
             viewer.push(env.state_dict())
+            if args.pace == "demo":
+                time.sleep(min(args.hold, 2.0))  # let the viewer show the new season
         print(f"\n{C['c']}=== Episode {ep + 1}/{args.episodes} · weather year {year} ==={C['x']}")
         print(f"{C['d']}{'date':>7} {'t':>3}  {'advisory':<28} {'reward':>7}  soil        crop-health  armyworm(true/est)  budget  event{C['x']}")
         done = False
@@ -101,7 +136,8 @@ def play(args):
             s = env.state_dict()
             colour = C["g"] if r > 0.05 else C["r"] if r < -0.3 else ""
             act = ACTION_LABELS[Action(a)]
-            if a == Action.WAIT and not args.all_steps and "!" not in s["event"] and "Germination" not in s["event"] and not done:
+            highlight = is_highlight(a, s, done)
+            if not highlight and not args.all_steps:
                 act_disp = f"{C['d']}{act:<28}{C['x']}"
             else:
                 act_disp = f"{C['y']}{act:<28}{C['x']}"
@@ -110,9 +146,14 @@ def play(args):
                 f"{bar(s['soil_moisture'])} {bar(s['health']) if s['planted'] else '·' * 10}  "
                 f"{s['pest_true']:.2f}/{s['pest_estimate']:.2f}           {s['budget']:5.1f}  {s['event']}"
             )
+            if highlight:
+                print(f"{C['d']}{'':>13}↳ reward {r:+.2f} = {explain_reward(info['reward_parts'])}{C['x']}")
             if viewer:
                 viewer.push(s)
-                time.sleep(1.0 / args.speed)
+                if args.pace == "demo":
+                    time.sleep(args.hold if highlight else 1.0 / speed)
+                else:
+                    time.sleep(1.0 / speed)
         prof = env.totals["revenue"] - env.totals["costs"]
         results.append((env.ep_return, env.harvest_kg, prof))
         print(
@@ -136,7 +177,11 @@ def play(args):
 def add_play_args(ap: argparse.ArgumentParser):
     ap.add_argument("--algo", default="best", help="best | dqn | ppo | a2c | reinforce | " + " | ".join(BASELINES))
     ap.add_argument("--episodes", type=int, default=3)
-    ap.add_argument("--speed", type=float, default=3.0, help="decision steps per second in the GUI")
+    ap.add_argument("--pace", choices=["demo", "steady"], default="demo",
+                    help="demo: fast-forward monitoring, hold on each SMS advisory; steady: fixed speed")
+    ap.add_argument("--speed", type=float, default=None,
+                    help="steps per second (demo: monitoring steps, default 5; steady: all steps, default 3)")
+    ap.add_argument("--hold", type=float, default=2.5, help="demo pace: seconds to hold on each advisory")
     ap.add_argument("--mode", choices=["greedy", "sample"], default="greedy")
     ap.add_argument("--drought", action="store_true", help="evaluate with 40%% less rain")
     ap.add_argument("--year-index", type=int, default=0)
