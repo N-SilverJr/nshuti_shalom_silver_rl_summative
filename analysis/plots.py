@@ -108,7 +108,7 @@ def fig_comparative():
             ax.axhline(v, color=MUTED, ls=ls, lw=1.2)
             ax.text(ax.get_xlim()[0], v, f" {name.replace('_', ' ')}", color=INK2, fontsize=8, va="bottom")
     ax.set(xlabel="training frames (thousands)", ylabel="validation return (greedy, 20 unseen seasons)",
-           title="Fig. 1  Validation return during training (best run per algorithm)")
+           title="Validation return during training (best run per algorithm)")
     ax.legend(loc="lower right", fontsize=8)
     ax.text(0.99, 0.30, "●  checkpoint kept (best validation)\nbaselines: dashed/dotted, test seasons",
             transform=ax.transAxes, ha="right", fontsize=8, color=INK2)
@@ -135,7 +135,7 @@ def fig_dqn_loss():
     a1.set(xlabel="frames (thousands)", ylabel="mean TD loss", title="DQN objective (TD loss)", yscale="log")
     a2.set(xlabel="frames (thousands)", ylabel="mean max-Q of sampled batch (log)", title="DQN value estimates", yscale="log")
     a1.legend(fontsize=8)
-    fig.suptitle("Fig. 2  DQN loss and Q-values across all 10 runs (grey) - best run highlighted", fontsize=10, color=INK)
+    fig.suptitle("DQN loss and Q-values across all 10 runs (grey) - best run highlighted", fontsize=10, color=INK)
     save(fig, "fig2_dqn_loss.png")
 
 
@@ -154,7 +154,7 @@ def fig_entropy():
         ax.set(title=NAMES[a], xlabel="frames (thousands)")
         ax.legend(fontsize=8, loc="lower left")
     axes[0].set_ylabel("policy entropy (nats)")
-    fig.suptitle("Fig. 3  Policy entropy during training - all runs (grey), best highlighted", fontsize=10, color=INK)
+    fig.suptitle("Policy entropy during training - all runs (grey), best highlighted", fontsize=10, color=INK)
     save(fig, "fig3_pg_entropy.png")
 
 
@@ -167,7 +167,7 @@ def fig_convergence():
         r = runs(a)[b]
         ax.plot(col(r, "episodes"), smooth(col(r, "train_return"), 5), color=COLORS[a], label=NAMES[a])
     ax.set(xlabel="training episodes (seasons)", ylabel="training return (last 20 episodes, smoothed)",
-           title="Fig. 4  Convergence on training weather years (best runs)")
+           title="Convergence on training weather years (best runs)")
     ax.legend(fontsize=9)
     save(fig, "fig4_convergence.png")
 
@@ -196,7 +196,7 @@ def fig_generalization():
               loc="lower left", fontsize=8)
     ax.set_xticks(x, [NAMES.get(p, p.replace("_", "\n")) for p in pols], fontsize=9)
     ax.set(ylabel="test return (mean ± sd)\n50 episodes over 9 real seasons",
-           title="Fig. 5  Generalisation to unseen weather years (test set)")
+           title="Generalisation to unseen real seasons: normal vs drought")
     save(fig, "fig5_generalization.png")
 
 
@@ -216,7 +216,7 @@ def fig_sweeps():
         ax.invert_yaxis()
         ax.axvline(0, color=INK2, lw=0.8)
         ax.set(title=NAMES[a], xlabel="test return (best-val checkpoint)")
-    fig.suptitle("Fig. 6  Hyperparameter sweeps - test return of each run (run selected on validation highlighted)", fontsize=10, color=INK)
+    fig.suptitle("Hyperparameter sweeps - test return of each run (run selected on validation highlighted)", fontsize=10, color=INK)
     save(fig, "fig6_sweeps.png")
 
 
