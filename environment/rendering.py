@@ -8,7 +8,7 @@ A tiny stdlib HTTP server (no extra dependencies) that:
   * exposes a small REST API:
         GET  /api/spec       action + observation definitions
         GET  /api/state      latest environment snapshot
-        POST /api/recommend  {"observation": [17 floats]} -> advisory
+        POST /api/recommend  {"observation": [18 floats]} -> advisory
     ``/api/recommend`` is the serialisation path from a trained policy to a
     real product: a farmer-facing service posts sensor/weather/farmer-report
     features and receives the advisory to send by SMS.
