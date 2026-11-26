@@ -118,15 +118,16 @@ def play(args):
         time.sleep(args.wait)
 
     results = []
-    for ep in range(args.episodes):
-        year = env.year_ids[(args.year_index + ep) % len(env.year_ids)]
+    first = max(args.start_episode, 1) - 1  # replay episode N of a longer run exactly (same start-state seed)
+    for ep in range(first, first + args.episodes):
+        year = env.year_ids[(args.year_index + ep - first) % len(env.year_ids)]
         obs, _ = env.reset(seed=1000 + ep, options={"year": year})
         if viewer:
             viewer.set_meta(episode=ep + 1)
             viewer.push(env.state_dict())
             if args.pace == "demo":
                 time.sleep(min(args.hold, 2.0))  # let the viewer show the new season
-        print(f"\n{C['c']}=== Episode {ep + 1}/{args.episodes} · weather year {year} ==={C['x']}")
+        print(f"\n{C['c']}=== Episode {ep + 1}/{first + args.episodes} · weather year {year} ==={C['x']}")
         print(f"{C['d']}{'date':>7} {'t':>3}  {'advisory':<28} {'reward':>7}  soil        crop-health  armyworm(true/est)  budget  event{C['x']}")
         done = False
         while not done:
@@ -185,6 +186,9 @@ def add_play_args(ap: argparse.ArgumentParser):
     ap.add_argument("--mode", choices=["greedy", "sample"], default="greedy")
     ap.add_argument("--drought", action="store_true", help="evaluate with 40%% less rain")
     ap.add_argument("--year-index", type=int, default=0)
+    ap.add_argument("--start-episode", type=int, default=1,
+                    help="number the first season as episode N and reuse that episode's start-state seed, "
+                         "so one season can be replayed exactly as it played inside a longer run")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--wait", type=float, default=4.0, help="seconds to wait for the browser before starting")
     ap.add_argument("--no-browser", action="store_true")
